@@ -22,7 +22,7 @@ WORKDIR /openclaw
 
 # Pin to a known-good ref (tag/branch). Override in Railway template settings if needed.
 # Using a released tag avoids build breakage when `main` temporarily references unpublished packages.
-ARG OPENCLAW_GIT_REF=v2026.2.9
+ARG OPENCLAW_GIT_REF=v2026.2.15
 RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/openclaw/openclaw.git .
 
 # Patch: relax version requirements for packages that may reference unpublished versions.
@@ -46,7 +46,29 @@ ENV NODE_ENV=production
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
+    jq \
+    curl \
+    gnupg \
+    lsb-release \
   && rm -rf /var/lib/apt/lists/*
+
+# --- Custom packages for WarforgeTech deployments ---
+
+# gog (Gmail CLI) — for Gmail PubSub automation
+RUN curl -fsSL https://gogcli.sh/install.sh | bash \
+    || echo "WARNING: gog install failed — may need manual install"
+
+# Tailscale — for Funnel-based port routing
+RUN curl -fsSL https://tailscale.com/install.sh | bash
+
+# Google Cloud CLI — for GCP integrations
+RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+    gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+    > /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends google-cloud-cli && \
+    rm -rf /var/lib/apt/lists/*
 
 # `openclaw update` expects pnpm. Provide it in the runtime image.
 RUN corepack enable && corepack prepare pnpm@10.23.0 --activate

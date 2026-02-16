@@ -70,6 +70,33 @@ RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
     apt-get install -y --no-install-recommends google-cloud-cli && \
     rm -rf /var/lib/apt/lists/*
 
+# --- Skill dependencies ---
+
+# GitHub CLI — for github skill
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+    > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      gh \
+      ffmpeg \
+      python3 \
+      python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# uv (Python package manager) — for nano-pdf, nano-banana-pro, markdown-converter
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Python-based skill tools
+RUN uv tool install yt-dlp \
+    && uv tool install nano-pdf \
+    && uv tool install markitdown
+
+# mcporter — MCP server integration skill
+RUN npm i -g mcporter
+
 # `openclaw update` expects pnpm. Provide it in the runtime image.
 RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
 

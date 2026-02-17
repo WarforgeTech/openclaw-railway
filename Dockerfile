@@ -94,6 +94,13 @@ RUN uv tool install yt-dlp \
     && uv tool install nano-pdf \
     && uv tool install markitdown
 
+# Symlink uv tools to /usr/local/bin (Railway overrides PATH, /root/.local/bin not in it)
+RUN ln -sf /root/.local/bin/uv /usr/local/bin/uv \
+    && ln -sf /root/.local/bin/uvx /usr/local/bin/uvx \
+    && ln -sf /root/.local/bin/yt-dlp /usr/local/bin/yt-dlp \
+    && ln -sf /root/.local/bin/nano-pdf /usr/local/bin/nano-pdf \
+    && ln -sf /root/.local/bin/markitdown /usr/local/bin/markitdown
+
 # mcporter — MCP server integration skill
 RUN npm i -g mcporter
 
